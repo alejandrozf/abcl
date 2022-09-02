@@ -49,8 +49,18 @@
           JNEW-RUNTIME-CLASS DEFINE-JAVA-CLASS ENSURE-JAVA-CLASS CHAIN
           JMETHOD-LET JEQUAL))
 
+(defun memoize (fn)
+  (let ((cache (make-hash-table :test #'equal)))
+    #'(lambda (&rest args)
+        (multiple-value-bind
+              (result exists)
+            (gethash args cache)
+          (if exists
+              result
+              (setf (gethash args cache)
+                    (apply fn args)))))))
 
-
+(setf (fdefinition 'jmethod) (memoize #'jmethod))
 
 (defun add-url-to-classpath (url &optional (classloader *classloader*))
   (jcall "addUrl" classloader url))
@@ -145,7 +155,7 @@ directory to search for classes or a list of such values."))
                             (princ (char-upcase char) str)))
                     name)))))
     (%jmake-proxy (canonicalize-jproxy-interfaces interface)
-                  (jmake-invocation-handler 
+                  (jmake-invocation-handler
                    (lambda (obj method &rest args)
                      (let ((sym (find-symbol
                                  (java->lisp method)
@@ -164,7 +174,7 @@ directory to search for classes or a list of such values."))
 (defmethod jmake-proxy (interface (implementation hash-table) &optional lisp-this)
   "Implements a Java interface using closures in an hash-table keyed by Java method name."
   (%jmake-proxy (canonicalize-jproxy-interfaces interface)
-                (jmake-invocation-handler 
+                (jmake-invocation-handler
                  (lambda (obj method &rest args)
                    (let ((fn (gethash method implementation)))
                      (if fn
@@ -382,8 +392,8 @@ calls on the java.util.Enumeration `jenumeration`."
                          collecting
                          (jclass-name arg-type))))
      ((string= class-name "java.lang.reflect.Field")
-      `(let ((field 
-               (find ,(jcall "getName" object) 
+      `(let ((field
+               (find ,(jcall "getName" object)
                      (jcall "getDeclaredFields"
                             ,(jcall "getDeclaringClass" object))
                      :key (lambda(el) (jcall "getName" el))
@@ -405,11 +415,11 @@ calls on the java.util.Enumeration `jenumeration`."
 ;;; higher-level operators
 
 (defmacro chain (target op &rest ops)
-  "Performs chained method invocations. 
+  "Performs chained method invocations.
 
 TARGET is either the receiver object when the first call is a virtual method
 call or a list in the form (:static <jclass>) when the first method
-call is a static method call. 
+call is a static method call.
 
 OP and each of the OPS are either method designators or lists in the
 form (<method designator> &rest args), where a method designator is
@@ -462,7 +472,7 @@ is equivalent to the following Java code:
       (print-java-object-by-class (jobject-class obj) obj stream)))
 
 ;;define extensions by eql methods on class name interned in keyword package
-;;e.g. (defmethod java::print-java-object-by-class ((class (eql ':|uk.ac.manchester.cs.owl.owlapi.concurrent.ConcurrentOWLOntologyImpl|)) obj stream) 
+;;e.g. (defmethod java::print-java-object-by-class ((class (eql ':|uk.ac.manchester.cs.owl.owlapi.concurrent.ConcurrentOWLOntologyImpl|)) obj stream)
 ;;         (print 'hi)
 ;;         (call-next-method))
 (defmethod print-java-object-by-class :around (class obj stream)
@@ -575,7 +585,7 @@ is equivalent to the following Java code:
                    (t 1)))))
       (stable-sort cpl #'(lambda (x y)
                            (< (score x) (score y)))))))
-          
+
 (defmethod make-instance ((class java-class) &rest initargs &key &allow-other-keys)
   (declare (ignore initargs))
   (error "make-instance not supported for ~S" class))
@@ -585,4 +595,3 @@ is equivalent to the following Java code:
   (sys:get-input-stream pathname))
 
 (provide "JAVA")
-
