@@ -36,7 +36,7 @@
 
 (defvar *classloader* (get-default-classloader))
 
-
+(defparameter *cache* (make-hash-table :test #'equal))
 
 (EXPORT '(JREGISTER-HANDLER JINTERFACE-IMPLEMENTATION JMAKE-INVOCATION-HANDLER
           JMAKE-PROXY JPROPERTY-VALUE JOBJECT-CLASS JCLASS-SUPERCLASS
@@ -50,15 +50,14 @@
           JMETHOD-LET JEQUAL))
 
 (defun memoize (fn)
-  (let ((cache (make-hash-table :test #'equal)))
-    #'(lambda (&rest args)
-        (multiple-value-bind
-              (result exists)
-            (gethash args cache)
-          (if exists
-              result
-              (setf (gethash args cache)
-                    (apply fn args)))))))
+  #'(lambda (&rest args)
+      (multiple-value-bind
+            (result exists)
+          (gethash args *cache*)
+        (if exists
+            result
+            (setf (gethash args *cache*)
+                  (apply fn args))))))
 
 (setf (fdefinition 'jmethod) (memoize #'jmethod))
 
