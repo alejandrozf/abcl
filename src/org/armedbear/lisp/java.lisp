@@ -36,7 +36,10 @@
 
 (defvar *classloader* (get-default-classloader))
 
-(defparameter *cache* (make-hash-table :test #'equal))
+(defparameter *cache* (make-hash-table))
+
+(setf (gethash :jmethod *cache*) (make-hash-table :test #'equal))
+(setf (gethash :jclass *cache*) (make-hash-table :test #'equal))
 
 (EXPORT '(JREGISTER-HANDLER JINTERFACE-IMPLEMENTATION JMAKE-INVOCATION-HANDLER
           JMAKE-PROXY JPROPERTY-VALUE JOBJECT-CLASS JCLASS-SUPERCLASS
@@ -49,17 +52,18 @@
           JNEW-RUNTIME-CLASS DEFINE-JAVA-CLASS ENSURE-JAVA-CLASS CHAIN
           JMETHOD-LET JEQUAL))
 
-(defun memoize (fn)
+(defun memoize (fn key)
   #'(lambda (&rest args)
       (multiple-value-bind
             (result exists)
-          (gethash args *cache*)
+          (gethash args (gethash key *cache*))
         (if exists
             result
-            (setf (gethash args *cache*)
+            (setf (gethash args (gethash key *cache*))
                   (apply fn args))))))
 
-(setf (fdefinition 'jmethod) (memoize #'jmethod))
+(setf (fdefinition 'jmethod) (memoize #'jmethod :jmethod))
+(setf (fdefinition 'jclass) (memoize #'jclass :jclass))
 
 (defun add-url-to-classpath (url &optional (classloader *classloader*))
   (jcall "addUrl" classloader url))
