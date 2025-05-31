@@ -454,23 +454,25 @@ hint."
 
 
 (defun make-local-repository-manager (repository-system local-repository session)
-  (or 
-   (ignore-errors 
-     (#"newLocalRepositoryManager" 
+  (or
+   (ignore-errors
+     (#"newLocalRepositoryManager"
       repository-system local-repository))
    (ignore-errors      ;; maven-3.1.0
-     (#"newLocalRepositoryManager" 
+     (#"newLocalRepositoryManager"
       repository-system session local-repository))))
+
+(defparameter *maven-user-local-repository* (user-homedir-pathname))
 
 (defun make-local-repository ()
   (java:jnew
    (or
     (ignore-errors
-      (jss:find-java-class "org.sonatype.aether.repository.LocalRepository"))
+     (jss:find-java-class "org.sonatype.aether.repository.LocalRepository"))
     (ignore-errors
-      (jss:find-java-class "org.eclipse.aether.repository.LocalRepository")))
+     (jss:find-java-class "org.eclipse.aether.repository.LocalRepository")))
    (namestring (merge-pathnames ".m2/repository/"
-                                (user-homedir-pathname)))))
+                                *maven-user-local-repository*))))
 
 (defparameter *maven-http-proxy* nil
   "A string containing the URI of an http proxy for Maven to use.")
