@@ -1,4 +1,4 @@
-FROM docker.io/eclipse-temurin:17
+FROM azul/zulu-openjdk:21.0.6-jdk-crac
 
 RUN (export DEBIAN_FRONTEND='noninteractive' && \
     apt-get update  && \
@@ -32,6 +32,3 @@ RUN ln -s ${abcl_exec_path} /usr/local/bin/abcl
 
 USER abcl
 ENTRYPOINT [ "/usr/local/bin/abcl" ]
-
-
-
