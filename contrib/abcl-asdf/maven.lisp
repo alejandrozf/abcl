@@ -635,7 +635,7 @@ in Java CLASSPATH representation."
            (#"addRepository" collect-request repository))))
     (dolist (repository repositories)
       (#"addRepository" collect-request
-                        (let ((r (make-remote-repository "central" "default" repository)))
+                        (let ((r (make-remote-repository repository "default" repository)))
                           (when *maven-http-proxy*
                             (#"setProxy" r (make-proxy)))
                           r)))
